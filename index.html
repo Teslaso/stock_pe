@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A股股票分析工具 - 股价、市盈率与ROE对照图</title>
+    <script src="https://cdn.jsdelivr.net/npm/plotly.js@2.35.2/dist/plotly.min.js"></script>
+    <script>
+        // 确保Plotly加载完成
+        if (typeof Plotly === 'undefined') {
+            console.error('Plotly未能正确加载，尝试备用CDN');
+            document.write('<script src="https://unpkg.com/plotly.js@2.35.2/dist/plotly.min.js"><\/script>');
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .control-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-item label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9em;
+        }
+
+        .control-item input,
+        .control-item select {
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+
+        .control-item input:focus,
+        .control-item select:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 24px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .chart-container {
+            padding: 30px;
+            min-height: 600px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .info-panel {
+            background: #e3f2fd;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .info-panel h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .info-panel p {
+            color: #424242;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .control-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .control-item {
+                width: 100%;
+            }
+
+            .control-item input,
+            .control-item select {
+                min-width: 100%;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐔 大鸡腿股票估值系统</h1>
+            <p>股价、市盈率与ROE综合分析 - 支持交互式图表操作</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <div class="control-item">
+                    <label for="stockCode">股票代码</label>
+                    <input type="text" id="stockCode" placeholder="例如: 000001" value="000001">
+                </div>
+                
+                <div class="control-item">
+                    <label for="startDate">开始日期</label>
+                    <input type="date" id="startDate">
+                </div>
+                
+                <div class="control-item">
+                    <label for="endDate">结束日期</label>
+                    <input type="date" id="endDate">
+                </div>
+                
+                <div class="control-item">
+                    <label for="period">快速选择</label>
+                    <select id="period">
+                        <option value="">自定义时间</option>
+                        <option value="1m">近1个月</option>
+                        <option value="3m">近3个月</option>
+                        <option value="6m">近6个月</option>
+                        <option value="1y" selected>近1年</option>
+                        <option value="2y">近2年</option>
+                        <option value="3y">近3年</option>
+                        <option value="5y">近5年</option>
+                    </select>
+                </div>
+                
+                <button class="btn" onclick="loadStockData()">📊 生成分析图表</button>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <h3>💡 使用说明</h3>
+            <p>
+                • <strong>股票代码</strong>：输入6位A股股票代码（如000001表示平安银行）<br>
+                • <strong>时间选择</strong>：可选择预设时间段或自定义日期范围<br>
+                • <strong>图表交互</strong>：支持鼠标滚轮缩放、拖拽平移、悬停查看详细数据<br>
+                • <strong>多轴显示</strong>：左轴显示股价，右轴显示市盈率和ROE，便于综合分析
+            </p>
+        </div>
+
+        <div class="chart-container">
+            <div id="stockChart"></div>
+            <div id="loading" class="loading" style="display: none;">
+                <div class="loading-spinner"></div>
+                <p>正在获取股票数据，请稍候...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化日期
+        function initializeDates() {
+            const today = new Date();
+            const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+            
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+            document.getElementById('startDate').value = oneYearAgo.toISOString().split('T')[0];
+        }
+
+        // 快速时间选择
+        document.getElementById('period').addEventListener('change', function() {
+            const period = this.value;
+            if (!period) return;
+            
+            const today = new Date();
+            let startDate = new Date();
+            
+            switch(period) {
+                case '1m':
+                    startDate.setMonth(today.getMonth() - 1);
+                    break;
+                case '3m':
+                    startDate.setMonth(today.getMonth() - 3);
+                    break;
+                case '6m':
+                    startDate.setMonth(today.getMonth() - 6);
+                    break;
+                case '1y':
+                    startDate.setFullYear(today.getFullYear() - 1);
+                    break;
+                case '2y':
+                    startDate.setFullYear(today.getFullYear() - 2);
+                    break;
+                case '3y':
+                    startDate.setFullYear(today.getFullYear() - 3);
+                    break;
+                case '5y':
+                    startDate.setFullYear(today.getFullYear() - 5);
+                    break;
+            }
+            
+            document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+        });
+
+        // 加载股票数据
+        async function loadStockData() {
+            const stockCode = document.getElementById('stockCode').value.trim();
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            if (!stockCode) {
+                alert('请输入股票代码');
+                return;
+            }
+            
+            if (!startDate || !endDate) {
+                alert('请选择时间范围');
+                return;
+            }
+            
+            if (new Date(startDate) >= new Date(endDate)) {
+                alert('开始日期必须早于结束日期');
+                return;
+            }
+            
+            // 显示加载状态
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('stockChart').innerHTML = '';
+            
+            try {
+                const response = await fetch('/api/stock_data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        stock_code: stockCode,
+                        start_date: startDate,
+                        end_date: endDate
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // 绘制图表
+                plotStockChart(data);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('stockChart').innerHTML = 
+                    `<div class="error">❌ 数据获取失败: ${error.message}</div>`;
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // 绘制股票图表
+        function plotStockChart(data) {
+            const dates = data.dates;
+            const prices = data.prices;
+            const pe_ratios = data.pe_ratios;
+            const roe_ratios = data.roe_ratios;
+            const stock_name = data.stock_name || '未知股票';
+            
+            // 股价线
+            const priceTrace = {
+                x: dates,
+                y: prices,
+                type: 'scatter',
+                mode: 'lines',
+                name: '股价',
+                line: {
+                    color: '#2E86AB',
+                    width: 2
+                },
+                hovertemplate: '<b>日期</b>: %{x}<br><b>股价</b>: ¥%{y:.2f}<extra></extra>'
+            };
+            
+            // 市盈率线
+            const peTrace = {
+                x: dates,
+                y: pe_ratios,
+                type: 'scatter',
+                mode: 'lines',
+                name: '市盈率',
+                yaxis: 'y2',
+                line: {
+                    color: '#A23B72',
+                    width: 2
+                },
+                hovertemplate: '<b>日期</b>: %{x}<br><b>市盈率</b>: %{y:.2f}<extra></extra>'
+            };
+            
+            // ROE线
+            const roeTrace = {
+                x: dates,
+                y: roe_ratios,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'ROE(%)',
+                yaxis: 'y3',
+                line: {
+                    color: '#F18F01',
+                    width: 2
+                },
+                hovertemplate: '<b>日期</b>: %{x}<br><b>ROE</b>: %{y:.2f}%<extra></extra>'
+            };
+            
+            const layout = {
+                title: {
+                    text: `${stock_name} 股价、市盈率与ROE综合分析图`,
+                    font: {
+                        size: 20,
+                        color: '#2c3e50'
+                    }
+                },
+                xaxis: {
+                    title: '日期',
+                    type: 'date',
+                    gridcolor: '#f0f0f0'
+                },
+                yaxis: {
+                    title: '股价 (¥)',
+                    side: 'left',
+                    gridcolor: '#f0f0f0',
+                    titlefont: {color: '#2E86AB'},
+                    tickfont: {color: '#2E86AB'}
+                },
+                yaxis2: {
+                    title: '市盈率',
+                    side: 'right',
+                    overlaying: 'y',
+                    titlefont: {color: '#A23B72'},
+                    tickfont: {color: '#A23B72'},
+                    position: 1.0
+                },
+                yaxis3: {
+                    title: 'ROE(%)',
+                    side: 'right',
+                    overlaying: 'y',
+                    titlefont: {color: '#F18F01'},
+                    tickfont: {color: '#F18F01'},
+                    position: 0.85
+                },
+                hovermode: 'x unified',
+                legend: {
+                    x: 0.02,
+                    y: 0.98,
+                    bgcolor: 'rgba(255,255,255,0.8)',
+                    bordercolor: '#ddd',
+                    borderwidth: 1
+                },
+                plot_bgcolor: 'white',
+                paper_bgcolor: 'white',
+                margin: {
+                    l: 60,
+                    r: 60,
+                    t: 80,
+                    b: 60
+                }
+            };
+            
+            const config = {
+                responsive: true,
+                displayModeBar: true,
+                modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+                displaylogo: false,
+                toImageButtonOptions: {
+                    format: 'png',
+                    filename: `${stock_name}_股价市盈率ROE综合分析`,
+                    height: 600,
+                    width: 1000,
+                    scale: 1
+                }
+            };
+            
+            Plotly.newPlot('stockChart', [priceTrace, peTrace, roeTrace], layout, config);
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDates();
+        });
+
+        // 回车键触发查询
+        document.getElementById('stockCode').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                loadStockData();
+            }
+        });
+    </script>
+</body>
+</html>
