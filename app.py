@@ -11,6 +11,8 @@ from typing import Optional
 import logging
 import os
 
+from services import ValueLineService
+
 # 配置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -21,12 +23,15 @@ TUSHARE_TOKEN = os.getenv('TUSHARE_TOKEN', 'your_tushare_token_here')
 if TUSHARE_TOKEN and TUSHARE_TOKEN != 'your_tushare_token_here':
     ts.set_token(TUSHARE_TOKEN)
     pro = ts.pro_api()
+    vl_service = ValueLineService(TUSHARE_TOKEN)
     logger.info("✅ Tushare Pro API 初始化成功")
 else:
     pro = None
+    vl_service = None
     logger.error("❌ Tushare Pro token未配置，请设置TUSHARE_TOKEN环境变量")
 
 app = FastAPI(title="A股股票分析API", description="基于Tushare Pro的股票数据分析服务")
+app.mount("/static", StaticFiles(directory="."), name="static")
 
 def convert_to_ts_code(stock_code: str) -> str:
     """
@@ -97,8 +102,21 @@ def get_stock_data_tushare(ts_code: str, start_date: str, end_date: str) -> pd.D
         logger.error(f"Tushare Pro获取数据失败: {e}")
         raise e
 
-# 挂载静态文件
-app.mount("/static", StaticFiles(directory="."), name="static")
+@app.get("/api/value_line_report/{stock_code}")
+async def get_value_line_report(stock_code: str):
+    """
+    获取Value Line风格的深度研报数据
+    """
+    if not vl_service:
+        raise HTTPException(status_code=500, detail="服务未初始化 (Token缺失)")
+    
+    try:
+        logger.info(f"生成研报: {stock_code}")
+        data = vl_service.get_report_data(stock_code)
+        return data
+    except Exception as e:
+        logger.error(f"研报生成失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 class StockRequest(BaseModel):
     stock_code: str
@@ -112,6 +130,7 @@ class StockResponse(BaseModel):
     prices: list
     pe_ratios: list
     roe_ratios: list
+    pb_ratios: list
     error: Optional[str] = None
 
 @app.get("/")
@@ -198,10 +217,19 @@ async def get_stock_data(request: StockRequest):
             if pd.isna(roe_value) or roe_value < -100 or roe_value > 100:
                 roe_value = 10.0  # 默认值10%
             roe_ratios.append(float(roe_value))
+
+        # 处理PB数据
+        pb_ratios = []
+        for _, row in stock_data.iterrows():
+            pb_value = row.get('pb', 1.0)
+            if pd.isna(pb_value):
+                pb_value = 1.0  # 默认值
+            pb_ratios.append(float(pb_value))
         
         logger.info(f"✅ 使用Tushare Pro数据，共{len(stock_data)}条记录")
         logger.info(f"✅ 市盈率范围: {min(pe_ratios):.2f} - {max(pe_ratios):.2f}")
         logger.info(f"✅ ROE范围: {min(roe_ratios):.2f}% - {max(roe_ratios):.2f}%")
+        logger.info(f"✅ PB范围: {min(pb_ratios):.2f} - {max(pb_ratios):.2f}")
         
         # 数据验证
         if len(dates) == 0:
@@ -214,7 +242,8 @@ async def get_stock_data(request: StockRequest):
             dates=dates,
             prices=prices,
             pe_ratios=pe_ratios,
-            roe_ratios=roe_ratios
+            roe_ratios=roe_ratios,
+            pb_ratios=pb_ratios
         )
         
     except HTTPException:

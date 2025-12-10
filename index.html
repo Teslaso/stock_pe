@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A股股票分析工具 - 股价、市盈率与ROE对照图</title>
+    <title>A股股票分析报告 - Value Line 风格</title>
     <script src="https://cdn.jsdelivr.net/npm/plotly.js@2.35.2/dist/plotly.min.js"></script>
     <script>
         // 确保Plotly加载完成
@@ -17,112 +17,167 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            font-size: 14px;
         }
 
         body {
-            font-family: 'Microsoft YaHei', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: #f0f2f5;
             min-height: 100vh;
             padding: 20px;
+            color: #333;
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: auto;
+            gap: 0px; /* Adjust gap as needed */
         }
 
-        .header {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            font-weight: 300;
-        }
-
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-
-        .controls {
-            padding: 30px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .control-group {
+        /* Input Controls */
+        .controls-panel {
+            padding: 20px;
+            background-color: #e9eff4;
+            border-bottom: 1px solid #d0d7e0;
             display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
+            gap: 15px;
             align-items: center;
+            flex-wrap: wrap;
             justify-content: center;
         }
-
-        .control-item {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .control-item label {
-            font-weight: 600;
-            color: #495057;
-            font-size: 0.9em;
-        }
-
-        .control-item input,
-        .control-item select {
-            padding: 12px 16px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
+        .controls-panel input[type="text"] {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
             font-size: 1em;
-            transition: all 0.3s ease;
-            min-width: 150px;
+            min-width: 120px;
         }
-
-        .control-item input:focus,
-        .control-item select:focus {
-            outline: none;
-            border-color: #4facfe;
-            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .controls-panel button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
             color: white;
             border: none;
-            padding: 12px 30px;
-            border-radius: 8px;
-            font-size: 1em;
-            font-weight: 600;
+            border-radius: 4px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 24px;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+        .controls-panel button:hover {
+            background-color: #45a049;
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        /* Report Sections */
+        .report-section {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .report-section:last-child {
+            border-bottom: none;
         }
 
-        .btn:active {
-            transform: translateY(0);
+        .report-header {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .company-info h2 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        .company-info p {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .ratings-strip {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9em;
+            color: #555;
+            white-space: nowrap;
+        }
+        .ratings-strip span strong {
+            color: #000;
         }
 
-        .chart-container {
-            padding: 30px;
-            min-height: 600px;
+        .top-metrics-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            background-color: #f9f9f9;
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+            font-size: 0.95em;
+        }
+        .metric-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .metric-item label {
+            color: #777;
+            margin-bottom: 3px;
+        }
+        .metric-item strong {
+            font-size: 1.1em;
+            color: #222;
+        }
+        .metric-sub {
+            font-size: 0.8em;
+            color: #999;
         }
 
+        #mainChart {
+            min-height: 500px;
+            width: 100%;
+        }
+
+        .statistical-array table,
+        .capital-quarterly-section table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.85em;
+        }
+        .statistical-array th, .statistical-array td,
+        .capital-quarterly-section th, .capital-quarterly-section td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: right;
+        }
+        .statistical-array th, .capital-quarterly-section th {
+            background-color: #f5f5f5;
+            text-align: center;
+            font-weight: bold;
+        }
+        .statistical-array th.left-align, .capital-quarterly-section th.left-align {
+            text-align: left;
+        }
+
+        .capital-quarterly-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .capital-quarterly-section h3 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .commentary-section p {
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
         .loading {
             text-align: center;
             padding: 50px;
@@ -145,355 +200,342 @@
             100% { transform: rotate(360deg); }
         }
 
-        .error {
+        .error-message {
             background: #f8d7da;
             color: #721c24;
             padding: 15px;
             border-radius: 8px;
             margin: 20px;
             border: 1px solid #f5c6cb;
-        }
-
-        .info-panel {
-            background: #e3f2fd;
-            padding: 20px;
-            margin: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #2196f3;
-        }
-
-        .info-panel h3 {
-            color: #1976d2;
-            margin-bottom: 10px;
-        }
-
-        .info-panel p {
-            color: #424242;
-            line-height: 1.6;
-        }
-
-        @media (max-width: 768px) {
-            .control-group {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .control-item {
-                width: 100%;
-            }
-
-            .control-item input,
-            .control-item select {
-                min-width: 100%;
-            }
-
-            .header h1 {
-                font-size: 2em;
-            }
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🐔 大鸡腿股票估值系统</h1>
-            <p>股价、市盈率与ROE综合分析 - 支持交互式图表操作</p>
-        </div>
-
-        <div class="controls">
-            <div class="control-group">
-                <div class="control-item">
-                    <label for="stockCode">股票代码</label>
-                    <input type="text" id="stockCode" placeholder="例如: 000001" value="000001">
-                </div>
-                
-                <div class="control-item">
-                    <label for="startDate">开始日期</label>
-                    <input type="date" id="startDate">
-                </div>
-                
-                <div class="control-item">
-                    <label for="endDate">结束日期</label>
-                    <input type="date" id="endDate">
-                </div>
-                
-                <div class="control-item">
-                    <label for="period">快速选择</label>
-                    <select id="period">
-                        <option value="">自定义时间</option>
-                        <option value="1m">近1个月</option>
-                        <option value="3m">近3个月</option>
-                        <option value="6m">近6个月</option>
-                        <option value="1y" selected>近1年</option>
-                        <option value="2y">近2年</option>
-                        <option value="3y">近3年</option>
-                        <option value="5y">近5年</option>
-                    </select>
-                </div>
-                
-                <button class="btn" onclick="loadStockData()">📊 生成分析图表</button>
-            </div>
-        </div>
-
-        <div class="info-panel">
-            <h3>💡 使用说明</h3>
-            <p>
-                • <strong>股票代码</strong>：输入6位A股股票代码（如000001表示平安银行）<br>
-                • <strong>时间选择</strong>：可选择预设时间段或自定义日期范围<br>
-                • <strong>图表交互</strong>：支持鼠标滚轮缩放、拖拽平移、悬停查看详细数据<br>
-                • <strong>多轴显示</strong>：左轴显示股价，右轴显示市盈率和ROE，便于综合分析
-            </p>
-        </div>
-
-        <div class="chart-container">
-            <div id="stockChart"></div>
-            <div id="loading" class="loading" style="display: none;">
+        <div class="controls-panel">
+            <input type="text" id="stockCodeInput" placeholder="请输入股票代码 (e.g., 000001)" value="000001">
+            <button onclick="loadReport()">生成报告</button>
+            <span id="loading" class="loading" style="display: none;">
                 <div class="loading-spinner"></div>
-                <p>正在获取股票数据，请稍候...</p>
+            </span>
+        </div>
+
+        <div id="reportContent" style="display: none;">
+            <!-- Report Header -->
+            <div class="report-section report-header">
+                <div class="company-info">
+                    <h2 id="companyName">公司全称</h2>
+                    <p><span id="englishName"></span><span id="marketCode"></span> - <span id="industry"></span></p>
+                    <p>报告日期: <span id="reportDate"></span></p>
+                </div>
+                <div class="ratings-strip" id="ratingsStrip">
+                    <!-- Ratings will be populated here -->
+                </div>
+            </div>
+
+            <!-- Top Metrics Strip -->
+            <div class="top-metrics-strip" id="topMetricsStrip">
+                <!-- Metrics will be populated here -->
+            </div>
+
+            <!-- Main Chart Area -->
+            <div class="report-section">
+                <h3>股价 & 估值走势图</h3>
+                <div id="mainChart"></div>
+            </div>
+
+            <!-- Statistical Array (Multi-year Financial Table) -->
+            <div class="report-section statistical-array">
+                <h3>多年财务统计表</h3>
+                <div id="statisticalArrayTable"></div>
+            </div>
+
+            <div class="report-section capital-quarterly-section">
+                <!-- Capital Structure -->
+                <div>
+                    <h3>资本结构 (最新)</h3>
+                    <div id="capitalStructureTable"></div>
+                </div>
+                <!-- Quarterly Array -->
+                <div>
+                    <h3>季度营收 & 盈利</h3>
+                    <div id="quarterlyArrayTable"></div>
+                </div>
+            </div>
+
+            <!-- Commentary Section -->
+            <div class="report-section commentary-section">
+                <h3>分析师点评</h3>
+                <p id="commentaryText"></p>
             </div>
         </div>
+
+        <div id="errorMessage" class="error-message" style="display: none;">
+            加载报告失败。请检查股票代码或稍后再试。
+        </div>
+
     </div>
 
     <script>
-        // 初始化日期
-        function initializeDates() {
-            const today = new Date();
-            const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
-            
-            document.getElementById('endDate').value = today.toISOString().split('T')[0];
-            document.getElementById('startDate').value = oneYearAgo.toISOString().split('T')[0];
-        }
-
-        // 快速时间选择
-        document.getElementById('period').addEventListener('change', function() {
-            const period = this.value;
-            if (!period) return;
-            
-            const today = new Date();
-            let startDate = new Date();
-            
-            switch(period) {
-                case '1m':
-                    startDate.setMonth(today.getMonth() - 1);
-                    break;
-                case '3m':
-                    startDate.setMonth(today.getMonth() - 3);
-                    break;
-                case '6m':
-                    startDate.setMonth(today.getMonth() - 6);
-                    break;
-                case '1y':
-                    startDate.setFullYear(today.getFullYear() - 1);
-                    break;
-                case '2y':
-                    startDate.setFullYear(today.getFullYear() - 2);
-                    break;
-                case '3y':
-                    startDate.setFullYear(today.getFullYear() - 3);
-                    break;
-                case '5y':
-                    startDate.setFullYear(today.getFullYear() - 5);
-                    break;
-            }
-            
-            document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
-            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initial load for default stock
+            loadReport();
         });
 
-        // 加载股票数据
-        async function loadStockData() {
-            const stockCode = document.getElementById('stockCode').value.trim();
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
-            
+        async function loadReport() {
+            const stockCode = document.getElementById('stockCodeInput').value.trim();
+            const loadingElement = document.getElementById('loading');
+            const reportContentElement = document.getElementById('reportContent');
+            const errorMessageElement = document.getElementById('errorMessage');
+
             if (!stockCode) {
-                alert('请输入股票代码');
+                errorMessageElement.innerText = "请输入股票代码！";
+                errorMessageElement.style.display = 'block';
+                reportContentElement.style.display = 'none';
                 return;
             }
-            
-            if (!startDate || !endDate) {
-                alert('请选择时间范围');
-                return;
-            }
-            
-            if (new Date(startDate) >= new Date(endDate)) {
-                alert('开始日期必须早于结束日期');
-                return;
-            }
-            
-            // 显示加载状态
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('stockChart').innerHTML = '';
-            
+
+            loadingElement.style.display = 'block';
+            errorMessageElement.style.display = 'none';
+            reportContentElement.style.display = 'none';
+
             try {
-                const response = await fetch('/api/stock_data', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        stock_code: stockCode,
-                        start_date: startDate,
-                        end_date: endDate
-                    })
-                });
-                
+                const response = await fetch(`/api/value_line_report/${stockCode}`);
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
                 }
-                
                 const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                
-                // 绘制图表
-                plotStockChart(data);
-                
+                renderReport(data);
+                reportContentElement.style.display = 'grid'; // Use grid for main content
             } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('stockChart').innerHTML = 
-                    `<div class="error">❌ 数据获取失败: ${error.message}</div>`;
+                console.error('Failed to load report:', error);
+                errorMessageElement.innerText = `加载报告失败: ${error.message}`;
+                errorMessageElement.style.display = 'block';
             } finally {
-                document.getElementById('loading').style.display = 'none';
+                loadingElement.style.display = 'none';
             }
         }
 
-        // 绘制股票图表
-        function plotStockChart(data) {
-            const dates = data.dates;
-            const prices = data.prices;
-            const pe_ratios = data.pe_ratios;
-            const roe_ratios = data.roe_ratios;
-            const stock_name = data.stock_name || '未知股票';
-            
-            // 股价线
-            const priceTrace = {
-                x: dates,
-                y: prices,
-                type: 'scatter',
-                mode: 'lines',
-                name: '股价',
-                line: {
-                    color: '#2E86AB',
-                    width: 2
+        function renderReport(data) {
+            console.log("Rendering report with data:", data); // Debugging
+            renderHeader(data.meta, data.ranks);
+            renderTopMetrics(data.top_metrics);
+            renderMainChart(data.chart);
+            renderStatisticalArray(data.statistical_array.annual_data, data.growth_rates);
+            renderCapitalQuarterly(data.capital_structure, data.quarterly_array);
+            renderCommentary(data.commentary);
+        }
+
+        function renderHeader(meta, ranks) {
+            document.getElementById('companyName').innerText = meta.name || 'N/A';
+            document.getElementById('englishName').innerText = meta.fullname ? `${meta.fullname} - ` : '';
+            document.getElementById('marketCode').innerText = `${meta.market || ''} ${meta.ts_code || ''}`;
+            document.getElementById('industry').innerText = meta.industry || 'N/A';
+            document.getElementById('reportDate').innerText = meta.report_date || 'N/A';
+
+            const ratingsStrip = document.getElementById('ratingsStrip');
+            ratingsStrip.innerHTML = `
+                <span>TIMELINESS: <strong>${ranks.timeliness || 'N/A'}</strong></span>
+                <span>SAFETY: <strong>${ranks.safety || 'N/A'}</strong></span>
+                <span>TECHNICAL: <strong>${ranks.technical || 'N/A'}</strong></span>
+                <span>BETA: <strong>${ranks.beta || 'N/A'}</strong></span>
+            `;
+        }
+
+        function renderTopMetrics(top_metrics) {
+            const strip = document.getElementById('topMetricsStrip');
+            strip.innerHTML = `
+                <div class="metric-item">
+                    <label>最新价 (元)</label>
+                    <strong>${top_metrics.recent_price ? top_metrics.recent_price.toFixed(2) : 'N/A'}</strong>
+                    <span class="metric-sub">52周高/低: N/A (TODO)</span>
+                </div>
+                <div class="metric-item">
+                    <label>市盈率 (TTM)</label>
+                    <strong>${top_metrics.pe_ttm ? top_metrics.pe_ttm.toFixed(2) : 'N/A'}</strong>
+                    <span class="metric-sub">10年PE中位: ${top_metrics.pe_10y_median ? top_metrics.pe_10y_median.toFixed(1) : 'N/A'}</span>
+                </div>
+                <div class="metric-item">
+                    <label>股息率 (%)</label>
+                    <strong>${top_metrics.div_yield ? (top_metrics.div_yield * 100).toFixed(2) : 'N/A'}</strong>
+                    <span class="metric-sub">最近派息: N/A (TODO)</span>
+                </div>
+                <div class="metric-item">
+                    <label>总市值 (亿)</label>
+                    <strong>${top_metrics.market_cap ? (top_metrics.market_cap / 10000).toFixed(2) : 'N/A'}</strong>
+                </div>
+                <div class="metric-item">
+                    <label>目标价区间</label>
+                    <strong>N/A (TODO)</strong>
+                    <span class="metric-sub">年化回报: N/A (TODO)</span>
+                </div>
+            `;
+        }
+
+        function renderMainChart(chart_data) {
+            const dates = chart_data.dates;
+            const prices = chart_data.price;
+            const pe_ratios = chart_data.pe;
+            const pb_ratios = chart_data.pb;
+            const roe_ratios = chart_data.roe; // Assuming ROE data is also available
+
+            const traces = [
+                {
+                    x: dates, y: prices, type: 'scatter', mode: 'lines', name: '股价',
+                    line: { color: '#2E86AB', width: 2 }, yaxis: 'y1',
+                    hovertemplate: '<b>日期</b>: %{x}<br><b>股价</b>: ¥%{y:.2f}<extra></extra>'
                 },
-                hovertemplate: '<b>日期</b>: %{x}<br><b>股价</b>: ¥%{y:.2f}<extra></extra>'
-            };
-            
-            // 市盈率线
-            const peTrace = {
-                x: dates,
-                y: pe_ratios,
-                type: 'scatter',
-                mode: 'lines',
-                name: '市盈率',
-                yaxis: 'y2',
-                line: {
-                    color: '#A23B72',
-                    width: 2
+                {
+                    x: dates, y: pe_ratios, type: 'scatter', mode: 'lines', name: '市盈率(PE)',
+                    line: { color: '#A23B72', width: 1, dash: 'dot' }, yaxis: 'y2',
+                    hovertemplate: '<b>日期</b>: %{x}<br><b>市盈率</b>: %{y:.2f}<extra></extra>'
                 },
-                hovertemplate: '<b>日期</b>: %{x}<br><b>市盈率</b>: %{y:.2f}<extra></extra>'
-            };
-            
-            // ROE线
-            const roeTrace = {
-                x: dates,
-                y: roe_ratios,
-                type: 'scatter',
-                mode: 'lines',
-                name: 'ROE(%)',
-                yaxis: 'y3',
-                line: {
-                    color: '#F18F01',
-                    width: 2
+                {
+                    x: dates, y: pb_ratios, type: 'scatter', mode: 'lines', name: '市净率(PB)',
+                    line: { color: '#28a745', width: 1, dash: 'dot' }, yaxis: 'y3',
+                    hovertemplate: '<b>日期</b>: %{x}<br><b>市净率</b>: %{y:.2f}<extra></extra>'
                 },
-                hovertemplate: '<b>日期</b>: %{x}<br><b>ROE</b>: %{y:.2f}%<extra></extra>'
-            };
-            
+                {
+                    x: dates, y: roe_ratios, type: 'scatter', mode: 'lines', name: 'ROE(%)',
+                    line: { color: '#F18F01', width: 1, dash: 'dash' }, yaxis: 'y4',
+                    hovertemplate: '<b>日期</b>: %{x}<br><b>ROE</b>: %{y:.2f}%<extra></extra>'
+                }
+            ];
+
             const layout = {
-                title: {
-                    text: `${stock_name} 股价、市盈率与ROE综合分析图`,
-                    font: {
-                        size: 20,
-                        color: '#2c3e50'
-                    }
-                },
-                xaxis: {
-                    title: '日期',
-                    type: 'date',
-                    gridcolor: '#f0f0f0'
-                },
-                yaxis: {
-                    title: '股价 (¥)',
-                    side: 'left',
-                    gridcolor: '#f0f0f0',
-                    titlefont: {color: '#2E86AB'},
-                    tickfont: {color: '#2E86AB'}
-                },
-                yaxis2: {
-                    title: '市盈率',
-                    side: 'right',
-                    overlaying: 'y',
-                    titlefont: {color: '#A23B72'},
-                    tickfont: {color: '#A23B72'},
-                    position: 1.0
-                },
-                yaxis3: {
-                    title: 'ROE(%)',
-                    side: 'right',
-                    overlaying: 'y',
-                    titlefont: {color: '#F18F01'},
-                    tickfont: {color: '#F18F01'},
-                    position: 0.85
-                },
+                title: false, // Title moved to H3
+                xaxis: { title: '日期', type: 'date', gridcolor: '#f0f0f0', domain: [0, 0.9] },
+                yaxis: { title: '股价 (¥)', side: 'left', gridcolor: '#f0f0f0', titlefont: {color: '#2E86AB'}, tickfont: {color: '#2E86AB'} },
+                yaxis2: { title: 'PE', side: 'right', overlaying: 'y', titlefont: {color: '#A23B72'}, tickfont: {color: '#A23B72'}, position: 0.9 },
+                yaxis3: { title: 'PB', side: 'right', overlaying: 'y', titlefont: {color: '#28a745'}, tickfont: {color: '#28a745'}, position: 0.95 },
+                yaxis4: { title: 'ROE (%)', side: 'right', overlaying: 'y', titlefont: {color: '#F18F01'}, tickfont: {color: '#F18F01'}, position: 1.0 },
                 hovermode: 'x unified',
-                legend: {
-                    x: 0.02,
-                    y: 0.98,
-                    bgcolor: 'rgba(255,255,255,0.8)',
-                    bordercolor: '#ddd',
-                    borderwidth: 1
-                },
-                plot_bgcolor: 'white',
-                paper_bgcolor: 'white',
-                margin: {
-                    l: 60,
-                    r: 60,
-                    t: 80,
-                    b: 60
-                }
+                legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(255,255,255,0.8)', bordercolor: '#ddd', borderwidth: 1 },
+                plot_bgcolor: 'white', paper_bgcolor: 'white',
+                margin: { l: 60, r: 80, t: 30, b: 60 }
             };
-            
-            const config = {
-                responsive: true,
-                displayModeBar: true,
-                modeBarButtonsToRemove: ['lasso2d', 'select2d'],
-                displaylogo: false,
-                toImageButtonOptions: {
-                    format: 'png',
-                    filename: `${stock_name}_股价市盈率ROE综合分析`,
-                    height: 600,
-                    width: 1000,
-                    scale: 1
-                }
-            };
-            
-            Plotly.newPlot('stockChart', [priceTrace, peTrace, roeTrace], layout, config);
+
+            const config = { responsive: true, displayModeBar: true, modeBarButtonsToRemove: ['lasso2d', 'select2d'], displaylogo: false };
+            Plotly.newPlot('mainChart', traces, layout, config);
         }
 
-        // 页面加载时初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeDates();
-        });
-
-        // 回车键触发查询
-        document.getElementById('stockCode').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                loadStockData();
+        function renderStatisticalArray(annual_data, growth_rates) {
+            const tableContainer = document.getElementById('statisticalArrayTable');
+            if (!annual_data || annual_data.length === 0) {
+                tableContainer.innerHTML = '<p>暂无多年财务数据。</p>';
+                return;
             }
-        });
+
+            // Reverse data to show oldest first in table (or newest first, as per VL)
+            // Value Line shows oldest on left, newest on right, so we reverse it.
+            const sorted_data = annual_data.slice().sort((a,b) => a.year - b.year);
+
+            let tableHTML = '<table><thead><tr><th class="left-align">年度指标</th>';
+            sorted_data.forEach(item => { tableHTML += `<th>${item.year}</th>`; });
+            tableHTML += '<th>5年CAGR</th><th>10年CAGR</th></tr></thead><tbody>';
+
+            const fields = [
+                {key: 'sales_per_share', label: '每股销售 (元)'},
+                {key: 'eps', label: '每股收益 (元)'},
+                {key: 'cash_flow_per_share', label: '每股现金流 (元)'},
+                {key: 'book_value_per_share', label: '每股净资产 (元)'},
+                {key: 'pe_year_end', label: '年末PE'},
+                {key: 'pb_year_end', label: '年末PB'},
+                {key: 'roe', label: 'ROE (%)'},
+                {key: 'net_margin', label: '净利率 (%)'},
+                {key: 'shares_outstanding', label: '总股本 (亿股)'}
+            ];
+            
+            const growth_fields = [
+                {key: 'sales', label: '销售'},
+                {key: 'eps', label: '收益'},
+                {key: 'bvps', label: '净资产'}
+            ];
+
+            fields.forEach(field => {
+                tableHTML += `<tr><td class="left-align">${field.label}</td>`;
+                sorted_data.forEach(item => {
+                    let value = item[field.key];
+                    if (typeof value === 'number') {
+                        value = value.toFixed(field.key.includes('pe') || field.key.includes('pb') ? 1 : 2);
+                    } else if (value === null || typeof value === 'undefined' || isNaN(value)) {
+                        value = '-';
+                    }
+                    tableHTML += `<td>${value}</td>`;
+                });
+                // Add CAGR
+                const cagr_key_prefix = field.key.replace('_per_share', '').replace('_year_end', ''); // Extract sales, eps, bvps part
+                let cagr_5y = growth_rates[`${cagr_key_prefix}_5y`] !== undefined ? `${growth_rates[`${cagr_key_prefix}_5y`].toFixed(2)}%` : '-';
+                let cagr_10y = growth_rates[`${cagr_key_prefix}_10y`] !== undefined ? `${growth_rates[`${cagr_key_prefix}_10y`].toFixed(2)}%` : '-';
+
+                // Specific mapping for CAGR display
+                if (cagr_key_prefix === 'sales') {
+                    tableHTML += `<td>${growth_rates.sales_5y ? `${growth_rates.sales_5y.toFixed(2)}%` : '-'}</td>`;
+                    tableHTML += `<td>${growth_rates.sales_10y ? `${growth_rates.sales_10y.toFixed(2)}%` : '-'}</td>`;
+                } else if (cagr_key_prefix === 'eps') {
+                    tableHTML += `<td>${growth_rates.eps_5y ? `${growth_rates.eps_5y.toFixed(2)}%` : '-'}</td>`;
+                    tableHTML += `<td>${growth_rates.eps_10y ? `${growth_rates.eps_10y.toFixed(2)}%` : '-'}</td>`;
+                } else if (cagr_key_prefix === 'book_value') { // Adjusted for bvps_cagr
+                    tableHTML += `<td>${growth_rates.bvps_5y ? `${growth_rates.bvps_5y.toFixed(2)}%` : '-'}</td>`;
+                    tableHTML += `<td>${growth_rates.bvps_10y ? `${growth_rates.bvps_10y.toFixed(2)}%` : '-'}</td>`;
+                }
+                 else {
+                    tableHTML += `<td>-</td><td>-</td>`; // No CAGR for other fields
+                }
+
+                tableHTML += `</tr>`;
+            });
+
+            tableHTML += '</tbody></table>';
+            tableContainer.innerHTML = tableHTML;
+        }
+
+
+        function renderCapitalQuarterly(capital_struct, quarterly_array) {
+            const capitalTableContainer = document.getElementById('capitalStructureTable');
+            const quarterlyTableContainer = document.getElementById('quarterlyArrayTable');
+
+            if (capital_struct) {
+                capitalTableContainer.innerHTML = `
+                    <table>
+                        <thead><tr><th class="left-align">指标</th><th>数值</th></tr></thead>
+                        <tbody>
+                            <tr><td class="left-align">总资产 (亿)</td><td>${(capital_struct.total_assets / 100000000).toFixed(2)}</td></tr>
+                            <tr><td class="left-align">总负债 (亿)</td><td>${(capital_struct.total_liab / 100000000).toFixed(2)}</td></tr>
+                            <tr><td class="left-align">股东权益 (亿)</td><td>${(capital_struct.equity / 100000000).toFixed(2)}</td></tr>
+                            <tr><td class="left-align">有息负债 (亿)</td><td>${(capital_struct.debt / 100000000).toFixed(2)}</td></tr>
+                            <tr><td class="left-align">货币资金 (亿)</td><td>${capital_struct.cash ? (capital_struct.cash / 100000000).toFixed(2) : 'N/A'}</td></tr>
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                capitalTableContainer.innerHTML = '<p>暂无资本结构数据。</p>';
+            }
+
+            if (quarterly_array && quarterly_array.quarters && quarterly_array.quarters.length > 0) {
+                let quarterlyTableHTML = '<table><thead><tr><th>季度</th><th>营收 (亿)</th><th>净利润 (亿)</th></tr></thead><tbody>';
+                quarterly_array.quarters.forEach(q => {
+                    quarterlyTableHTML += `
+                        <tr>
+                            <td>${q.date}</td>
+                            <td>${q.revenue ? q.revenue.toFixed(2) : 'N/A'}</td>
+                            <td>${q.eps ? q.eps.toFixed(2) : 'N/A'}</td>
+                        </tr>
+                    `;
+                });
+                quarterlyTableHTML += '</tbody></table>';
+                quarterlyTableContainer.innerHTML = quarterlyTableHTML;
+            } else {
+                quarterlyTableContainer.innerHTML = '<p>暂无季度数据。</p>';
+            }
+        }
+
+        function renderCommentary(commentary_text) {
+            document.getElementById('commentaryText').innerText = commentary_text || '暂无点评信息。';
+        }
+
     </script>
 </body>
 </html>
